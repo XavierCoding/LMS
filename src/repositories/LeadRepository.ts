@@ -24,13 +24,14 @@ export interface CreateLeadInput {
 
 export class LeadRepository {
   /**
-   * Find a lead by phone number.
-   * Used by UniquenessService to check for duplicates before inserting.
+   * Find an active (non-rejected) lead by phone + job.
+   * Used by UniquenessService: same phone can be re-referred to the same job
+   * only after the previous lead is REJECTED. Different jobs are always allowed.
    */
-  async findByPhone(phone: string): Promise<Lead | null> {
+  async findActiveByPhoneAndJob(phone: string, jobId: number): Promise<Lead | null> {
     const rows = await query<Lead>(
-      `SELECT * FROM leads WHERE phone = $1 LIMIT 1`,
-      [phone]
+      `SELECT * FROM leads WHERE phone = $1 AND job_id = $2 AND status != 'REJECTED' LIMIT 1`,
+      [phone, jobId]
     );
     return rows[0] || null;
   }
