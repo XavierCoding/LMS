@@ -44,8 +44,8 @@ export class ReferralService {
       throw new NotFoundError(`Job with id ${input.job_id}`);
     }
 
-    // 3. Uniqueness check
-    await this.uniquenessService.assertUnique(input.phone);
+    // 3. Uniqueness check — scoped to phone + job so same phone can be referred to other jobs
+    await this.uniquenessService.assertUnique(input.phone, input.job_id);
 
     // 4. Assign TC
     const assignedTcId = await this.assignmentService.nextTC();
