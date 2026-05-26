@@ -23,7 +23,7 @@ describe('ReferralService.createReferral', () => {
     } as any;
 
     uniquenessService = {
-      assertUnique: jest.fn().mockResolvedValue(undefined),
+      assertUnique: jest.fn().mockResolvedValue(undefined), // (phone, jobId)
     } as any;
 
     assignmentService = {
@@ -60,8 +60,16 @@ describe('ReferralService.createReferral', () => {
     await expect(service.createReferral(validInput, 1)).rejects.toThrow(NotFoundError);
   });
 
-  it('rejects duplicate phone', async () => {
+  it('rejects duplicate phone for the same job', async () => {
     uniquenessService.assertUnique.mockRejectedValue(new DuplicateLeadError('9876543299'));
     await expect(service.createReferral(validInput, 1)).rejects.toThrow(DuplicateLeadError);
+  });
+
+  it('passes uniqueness check for same phone with a different job', async () => {
+    uniquenessService.assertUnique.mockResolvedValue(undefined);
+    leadRepo.create.mockResolvedValue({ id: 101 } as any);
+    const result = await service.createReferral({ ...validInput, job_id: 2 }, 1);
+    expect(result.success).toBe(true);
+    expect(uniquenessService.assertUnique).toHaveBeenCalledWith('9876543299', 2);
   });
 });
